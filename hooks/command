@@ -179,7 +179,7 @@ function terraform-run() {
     terraform-bin show tfplan -no-color > tfplan.txt
     terraform-bin show -json tfplan > tfplan.json
 
-    if grep -iFq "Plan: 0 to add, 0 to change, 0 to destroy." tfplan.txt; then
+    if grep -iFq "Plan: 0 to add, 0 to change, 0 to destroy." tfplan.txt || grep -iFq "No changes. Your infrastructure matches the configuration." tfplan.txt; then
       echo ""
       echo "--- :terraform: :buildkite: :white_check_mark: Exporting tf_diff=false to agent metadata."
       buildkite-agent meta-data set "tf_diff" "false"
