@@ -101,6 +101,33 @@ function terraform-bin() {
   docker run $(printf "%q " "${docker_args[@]}")
 }
 
+function terraform-visual-bin() {
+  local DOCKER_IMAGE="hieven/terraform-visual-cli:0.1.0-0.12.29"
+
+  docker_args=()
+
+  docker_args+=(
+    "--rm"
+    "-it"
+    "--entrypoint" "terraform-visual"
+    "--user" "$(id -u):$(id -g)"
+    "-v" "$PWD:/svc"
+  )
+
+  docker_args+=(
+    "-w" "/svc"
+    "$DOCKER_IMAGE"
+    "${@}"
+  )
+
+  if [[ "${DEBUG}" == true ]]; then
+    echo "--- :terraform-visual: :buildkite: :hammer_and_wrench: Debug on - show Docker command string."
+    echo "docker run $(printf "%q " "${docker_args[@]}")"
+  fi
+
+  docker run $(printf "%q " "${docker_args[@]}")
+}
+
 function terraform-run() {
   local APPLY=${BUILDKITE_PLUGIN_TERRAFORM_APPLY:-false}
   local APPLY_MASTER=${BUILDKITE_PLUGIN_TERRAFORM_APPLY_MASTER:-false}
@@ -178,6 +205,8 @@ function terraform-run() {
     # Capture plan output for setting variables and passing as artifacts.
     terraform-bin show tfplan -no-color > tfplan.txt
     terraform-bin show -json tfplan > tfplan.json
+    terraform-visual-bin --plan tfplan.json
+    tar czvf terraform-visual-report.zip ./terraform-visual-report
 
     if grep -iFq "Plan: 0 to add, 0 to change, 0 to destroy." tfplan.txt || grep -iFq "No changes. Your infrastructure matches the configuration." tfplan.txt; then
       echo ""
